@@ -5,7 +5,10 @@
 For simple tests we recommend the use of our preinstalled VM.
 
 ### Preinstalled VM
-A completely set up VM can be downloaded [here](ftp://ftp.kom.tu-darmstadt.de/VMs/P4-Codel.ova).
+A completely set up VM can be downloaded here:
+```
+ftp://ftp.kom.tu-darmstadt.de/VMs/P4-Codel.ova
+```
 Please go to the codel folder and follow the Run-instructions of this Readme.
 ```
 cd p4-codel
