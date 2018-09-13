@@ -9,10 +9,6 @@ A completely set up VM can be downloaded here:
 ```
 ftp://ftp.kom.tu-darmstadt.de/VMs/P4-Codel.ova
 ```
-Please go to the codel folder and follow the Run-instructions of this Readme.
-```
-cd p4-codel
-```
 *Username:* **codel**
 *Password:* **p4**
 
@@ -20,7 +16,14 @@ The VM is testet with Virtualbox. For Linux Users we recommend the use of a Host
 ```
 ssh -X codel@192.168.xxx.xxx
 ```
+
+Please go to the codel folder and follow the Run-instructions of this Readme.
+```
+cd p4-codel
+```
+
 If you want to reproduce the results shown in the paper this virtual machine is not powerful enough. We recommend a bare-metal server with at least 6 cores for no thread interference.
+
 ### Setup
 1. Install the following required tools:
     * [Mininet](https://github.com/mininet/mininet) - including **make install**
