@@ -1,0 +1,49 @@
+table_add forwarding forward 1 10.0.2.1 => 2 00:00:00:00:02:01
+table_add forwarding forward 1 10.0.2.2 => 2 00:00:00:00:02:02
+table_add forwarding forward 2 10.0.1.1 => 1 00:00:00:00:01:01
+table_add forwarding forward 2 10.0.1.2 => 1 00:00:00:00:01:02
+
+
+set_queue_rate 2000 2             //in pps
+set_queue_depth 10000 2           //in nb_pkts
+
+table_set_default t_addQueueDelay addQueueDelay
+table_set_default t_checksum a_checksum
+
+table_set_default t_codel_init_no_sojourn_violation a_codel_init_no_sojourn_violation
+table_set_default t_codel_init_sojourn_violation a_codel_init_sojourn_violation
+
+table_set_default t_set_drop_time a_set_drop_time
+table_set_default t_reset_drop_time a_reset_drop_time
+table_set_default t_set_ok_to_drop a_set_ok_to_drop
+
+
+table_set_default t_start_dropping a_go_to_drop_state
+table_set_default t_stop_dropping a_go_to_idle_state
+table_set_default t_start_dropping_hard a_start_hard_dropping
+table_set_default t_codel_set_last_drpcnt a_codel_set_last_drpcnt
+table_set_default t_drop a_drop_normal
+
+table_set_default t_codel_control_law a_codel_control_law 552
+
+table_add t_codel_control_law a_codel_control_law 0/17 => 781
+table_add t_codel_control_law a_codel_control_law 0/18 => 1104
+table_add t_codel_control_law a_codel_control_law 0/19 => 1562
+
+table_add t_codel_control_law a_codel_control_law 0/20 => 2209
+table_add t_codel_control_law a_codel_control_law 0/21 => 3125
+table_add t_codel_control_law a_codel_control_law 0/22 => 4419
+
+table_add t_codel_control_law a_codel_control_law 0/23 => 6250
+table_add t_codel_control_law a_codel_control_law 0/24 => 8838
+table_add t_codel_control_law a_codel_control_law 0/25 => 12500
+
+table_add t_codel_control_law a_codel_control_law 0/26 => 17677
+table_add t_codel_control_law a_codel_control_law 0/27 => 25000
+table_add t_codel_control_law a_codel_control_law 0/28 => 35355
+
+table_add t_codel_control_law a_codel_control_law 0/29 => 50000
+table_add t_codel_control_law a_codel_control_law 0/30 => 70710
+table_add t_codel_control_law a_codel_control_law 0/31 => 100000
+//this should never happen ...
+table_add t_codel_control_law a_codel_control_law 0/32 => 100000

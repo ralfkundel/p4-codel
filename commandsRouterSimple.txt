@@ -1,0 +1,12 @@
+table_add forwarding forward 1 10.0.2.1 => 2 00:00:00:00:02:01
+table_add forwarding forward 1 10.0.2.2 => 2 00:00:00:00:02:02
+table_add forwarding forward 2 10.0.1.1 => 1 00:00:00:00:01:01
+table_add forwarding forward 2 10.0.1.2 => 1 00:00:00:00:01:02
+
+
+set_queue_rate 1000 2             //in pps
+set_queue_depth 10000 2           //in nb_pkts
+
+
+table_set_default t_addQueueDelay addQueueDelay
+table_set_default t_checksum a_checksum

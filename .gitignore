@@ -1,0 +1,12 @@
+router_compiled.json
+*.pcap
+
+\.idea/
+*.iml
+
+*.pyc
+out/
+
+*.ods#
+*.swp
+*.DS_Store
