@@ -54,9 +54,6 @@ metadata codel_t codel;
 metadata queueing_metadata_t queueing_metadata;
 
 
-/////////////////////////////////
-///// begin Ralf
-/////////////////////////////////
 action a_codel_init() {
     //for debugging
     modify_field(codel.ok_to_drop, 0);
@@ -64,7 +61,7 @@ action a_codel_init() {
     add(codel.new_drop_time, codel.time_now, CONTROL_INTERVAL);
     register_read(codel.state_dropping , r_state_dropping, 0);
     register_read(codel.drop_cnt, r_drop_count, 0);
-    register_read(codel.last_drop_cnt, r_last_drop_count, 0); //r_last_drop_count wird nie geschrieben...
+    register_read(codel.last_drop_cnt, r_last_drop_count, 0);
     register_read(codel.drop_next, r_next_drop, 0);
     register_read(codel.drop_time, r_drop_time, 0);
 }
