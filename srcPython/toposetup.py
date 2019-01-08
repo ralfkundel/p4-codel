@@ -55,6 +55,9 @@ parser.set_defaults(nocli=False)
 parser.add_argument('--h3delay', help='The delay between h3 and s2. Example: "30ms"',
                     type=str, action="store")
 parser.set_defaults(h3delay="2ms")
+parser.add_argument('--iperft', help='The transmit time of iperf3 in seconds. Example: 30',
+                    type=int, action="store")
+parser.set_defaults(iperft=10)
 
 args = parser.parse_args()
 
@@ -177,7 +180,7 @@ def main():
     sleep(1)
 
     print "Now the iperf test starts !"
-    iperfTest.IperfTest(mn.getNodeByName('h1'), mn.getNodeByName('h3'), mn.getNodeByName('h2'), mn.getNodeByName('h4'))
+    iperfTest.IperfTest(mn.getNodeByName('h1'), mn.getNodeByName('h3'), mn.getNodeByName('h2'), mn.getNodeByName('h4'), args.iperft)
     if not args.nocli:
         CLI( mn )
     mn.stop()

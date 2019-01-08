@@ -18,9 +18,30 @@ if [ "$1" = "--nopcap" ] || [ "$1" = "--nocli" ]; then
   argsCommand=$1" True"
 fi
 
+if [ "$1" = "--iperft" ]; then 
+  argsCommand="--iperft "$2
+fi
+
 if [ "$2" = "--nopcap" ] || [ "$2" = "--nocli" ]; then
   argsCommand=$argsCommand" "$2" True"
 fi
+
+if [ "$2" = "--iperft" ]; then 
+  argsCommand=$argsCommand" --iperft "$3
+fi
+
+if [ "$3" = "--nopcap" ] || [ "$3" = "--nocli" ]; then
+  argsCommand=$argsCommand" "$3" True"
+fi
+
+if [ "$3" = "--iperft" ]; then 
+  argsCommand=$argsCommand" --iperft "$4
+fi
+
+if [ "$4" = "--nopcap" ] || [ "$4" = "--nocli" ]; then
+  argsCommand=$argsCommand" "$4" True"
+fi
+
 
 #compile p4 file
 [ -e router_compiled.json ] && sudo rm -f router_compiled.json
@@ -39,11 +60,11 @@ do
   sudo mn -c
   #start mininet environment
   sudo PYTHONPATH=$PYTHONPATH:../behavioral-model/mininet/ \
-      python toposetup.py \
-      --switch simple_switch -p4 \
-      --json ./router_compiled.json \
+      python srcPython/toposetup.py \
+      --swpath ../behavioral-model/targets/simple_switch/simple_switch \
+      --json ./router_compiled.json -p4 \
       --cli simple_switch_CLI \
-      --cliCmd commandsRouter1.txt \
+      --cliCmd commandsCodelRouter.txt \
       $argsCommand \
       --h3delay $i"ms"
   filename="iperf_output"$i".json"

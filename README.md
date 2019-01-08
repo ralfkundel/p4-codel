@@ -42,21 +42,21 @@ If you want to reproduce the results shown in the paper this virtual machine is 
 ## Run
 * Run Mininet with the P4(bmv2) CoDel implementation
 ```
-./run.sh [--nocli, --nopcap]
+./run.sh [--nocli, --nopcap, --iperft N]
 ```
 Normally this script generates PCAP files for evaluation and enters the Mininet CLI mode for debugging.
 With the optional command line parameters, this behavior can be changed.
 * Run Mininet with a simple P4(bmv2) router (fixed-sized FIFO)
 ```
-./simple_run.sh [--nocli, --nopcap]
+./simple_run.sh [--nocli, --nopcap, --iperft N]
 ```
 * Run Mininet with the Linux kernel CoDel implementation
 ```
-./linux_run.sh [--nocli, --nopcap]
+./linux_run.sh [--nocli, --nopcap, --iperft N]
 ```
 * Run Mininet with the P4(bmv2) CoDel implementation with different RTTs
 ```
-./rtt_run.sh [--nocli, --nopcap]
+./rtt_run.sh [--nocli, --nopcap, --iperft N]
 ```
 
 ## Evaluate
