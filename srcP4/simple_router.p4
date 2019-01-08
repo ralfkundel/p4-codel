@@ -13,6 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#define add_queue_delay
 
 #include "header.p4"
 
@@ -26,6 +27,10 @@
 /////////////////////////////////
 header ipv4_t ipv4;
 header ethernet_t ethernet;
+header udp_t udp;
+header tcp_t tcp;
+header tcp_opt_t tcp_options;
+metadata queueing_metadata_t queueing_metadata;
 
 parser start {
 	extract(ethernet);

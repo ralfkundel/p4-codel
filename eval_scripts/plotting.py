@@ -264,7 +264,7 @@ def plotPcapQueueDelay(trace):
         y_values.append(y_val)
 
     plt.plot(x_values, y_values)
-    plt.plot([0, 10.2], [5, 5], '--', color='C5')
+    plt.plot([0, x_values[len(x_values) - 1] + 0.2], [5, 5], '--', color='C5')
     plt.ylabel('queue delay [ms]')
     plt.xlabel('time [s]')
     if not noTitle:

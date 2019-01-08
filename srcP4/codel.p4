@@ -39,20 +39,7 @@ header_type codel_t {
     }
 }
 
-header_type queueing_metadata_t {
-    fields {
-        enq_timestamp : 48;
-        enq_qdepth : 16;
-        deq_timedelta : 32;
-        deq_qdepth : 16;
-        qid : 8;
-    }
-}
-
-
 metadata codel_t codel;
-metadata queueing_metadata_t queueing_metadata;
-
 
 action a_codel_init() {
     //for debugging

@@ -28,6 +28,7 @@ header ipv4_t ipv4;
 header udp_t udp;
 header tcp_t tcp;
 header tcp_opt_t tcp_options;
+metadata queueing_metadata_t queueing_metadata;
 
 /////////////////////////////////
 //        begin parser         //
