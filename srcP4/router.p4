@@ -77,6 +77,7 @@ control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t
     c_add_queue_delay() c_add_queue_delay_0;
     apply {
         if (standard_metadata.ingress_port == 9w1) {
+	    meta.codel.queue_id = standard_metadata.egress_port;
             c_codel_0.apply(hdr, meta, standard_metadata);
         }
 	#ifdef add_queue_delay
