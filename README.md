@@ -1,5 +1,5 @@
 # P4 Codel Implementation
-Detailed description: [Paper](ftp://ftp.kom.tu-darmstadt.de/papers/KBVKS18.pdf)
+Detailed description: [Paper](https://www.kom.tu-darmstadt.de/research-results/publications/publications-details/?no_cache=1&pub_id=KBV%2B18-1)
 
 
 ## Install
