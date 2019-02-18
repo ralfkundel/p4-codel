@@ -1,5 +1,5 @@
 /*
-* Copyright 2018-present Ralf Kundel, Nikolas Eller
+* Copyright 2018-present Ralf Kundel
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,12 +14,22 @@
 * limitations under the License.
 */
 
-control c_add_queue_delay(inout headers hdr, inout standard_metadata_t standard_metadata) {
-    apply {
-        if (hdr.ipv4.totalLen > 16w500) {
-            if (hdr.queue_delay.isValid()) {
-                hdr.queue_delay.delay = standard_metadata.deq_timedelta;
-            }
+header queue_delay_t queue_delay;
+
+control c_add_queue_delay {
+    if(ipv4.totalLen > 500){
+        if(valid(queue_delay)){
+            apply(t_addQueueDelay);
         }
     }
+}
+
+table t_addQueueDelay {
+	actions {
+		addQueueDelay;
+	}
+}
+
+action addQueueDelay(){
+    modify_field(queue_delay.delay , queueing_metadata.deq_timedelta);
 }

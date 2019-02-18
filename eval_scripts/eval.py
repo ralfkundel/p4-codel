@@ -62,7 +62,7 @@ def parse_pcap_trace(folder):
     packets_in = rdpcap(os.path.join(folder, "r1-eth1_out.pcap"))
     packets_out = rdpcap(os.path.join(folder, "r1-eth2_in.pcap"))
     out_pointer = 0
-    print("number  ingoing packets: "+str(len(packets_in)))
+    print("number ingoing packets: "+str(len(packets_in)))
     print("number outgoing packets: "+str(len(packets_out)))
     resLst = []
     length = len(packets_out)

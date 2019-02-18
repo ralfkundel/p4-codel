@@ -1,9 +1,5 @@
 /*
-* Original file with no license text 'https://github.com/p4lang/p4c-bm/blob/master/tests/p4_programs/tcp_checksum.p4'
-*/
-
-/*
-* Modifications copyright 2018-present Ralf Kundel, Jeremias Blendin
+* Copyright 2018-present Ralf Kundel, Nikolas Eller
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -18,71 +14,29 @@
 * limitations under the License.
 */
 
-field_list ipv4_checksum_list {
-        ipv4.version;
-        ipv4.ihl;
-        ipv4.diffserv;
-        ipv4.totalLen;
-        ipv4.identification;
-        ipv4.flags;
-        ipv4.fragOffset;
-        ipv4.ttl;
-        ipv4.protocol;
-        ipv4.srcAddr;
-        ipv4.dstAddr;
-}
-
-field_list_calculation ipv4_checksum {
-    input {
-        ipv4_checksum_list;
-    }
-    algorithm : csum16;
-    output_width : 16;
-}
-
-calculated_field ipv4.hdrChecksum {
-    update ipv4_checksum;
-}
-
-
-
-field_list tcp_checksum_list {
-        ipv4.srcAddr;
-        ipv4.dstAddr;
-        8'0;
-        ipv4.protocol;
-        routing_metadata.tcpLength;
-        tcp.srcPort;
-        tcp.dstPort;
-        tcp.seqNo;
-        tcp.ackNo;
-        tcp.dataOffset;
-        tcp.res;
-        //tcp.ecn;
-        //tcp.ctrl;
-        tcp.flags;
-        tcp.window;
-        tcp.urgentPtr;
-        payload;
-}
-
-field_list_calculation tcp_checksum {
-    input {
-        tcp_checksum_list;
-    }
-    algorithm : csum16;
-    output_width : 16;
-}
-
-calculated_field tcp.checksum {
-    update tcp_checksum if(valid(tcp));
-}
-
-table t_checksum {
-    actions {
-        a_checksum;
+control verifyChecksum(inout headers hdr, inout metadata meta) {
+    apply {
     }
 }
-action a_checksum(){
-    subtract(routing_metadata.tcpLength, routing_metadata.tcpLength, 20);
+
+control computeChecksum(inout headers hdr, inout metadata meta) {
+    apply {
+        update_checksum(true, { hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv, 
+            hdr.ipv4.totalLen, hdr.ipv4.identification, hdr.ipv4.flags, hdr.ipv4.fragOffset, 
+            hdr.ipv4.ttl, hdr.ipv4.protocol, hdr.ipv4.srcAddr, hdr.ipv4.dstAddr }, 
+            hdr.ipv4.hdrChecksum, HashAlgorithm.csum16);
+        update_checksum_with_payload(hdr.tcp.isValid(), { hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, 
+            8w0, hdr.ipv4.protocol, meta.routing_metadata.tcpLength, hdr.tcp.srcPort, hdr.tcp.dstPort, 
+            hdr.tcp.seqNo, hdr.tcp.ackNo, hdr.tcp.dataOffset, hdr.tcp.res, hdr.tcp.flags, hdr.tcp.window, 
+            hdr.tcp.urgentPtr, hdr.tcp_options, hdr.queue_delay }, hdr.tcp.checksum, HashAlgorithm.csum16);
+    }
 }
+
+control c_checksum(inout headers hdr, inout metadata meta) {
+    apply {
+        meta.routing_metadata.tcpLength = meta.routing_metadata.tcpLength - 16w20;
+    }
+}
+
+
+

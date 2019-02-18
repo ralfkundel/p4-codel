@@ -1,5 +1,5 @@
 /*
-* Copyright 2018-present Ralf Kundel, Jeremias Blendin
+* Copyright 2018-present Ralf Kundel, Nikolas Eller
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,266 +14,98 @@
 * limitations under the License.
 */
 
-#define SOJOURN_TARGET 5000  //in usec - 5ms
-#define CONTROL_INTERVAL 100000 //in usec - 100 ms - Changes must be done here AND in commandsCodelRouter.txt
+#define SOJOURN_TARGET 32w5000  //in usec - 5ms
+#define CONTROL_INTERVAL 48w100000 //in usec - 100 ms - Changes must be done here AND in commandsCodelRouter.txt
 #define INTERFACE_MTU 1500
 
-header_type codel_t {
-    fields {
-        drop_time: 48;
-        time_now : 48;
-        ok_to_drop: 1;
-        state_dropping: 1;
-        delta: 32;
-        time_since_last_dropping: 48;
+register<bit<32>>(32w1) r_drop_count;
+register<bit<48>>(32w1) r_drop_time;
+register<bit<32>>(32w1) r_last_drop_count;
+register<bit<48>>(32w1) r_next_drop;
+register<bit<1>>(32w1) r_state_dropping;
 
-        drop_next : 48;
-        drop_cnt : 32;
-        last_drop_cnt: 32;
+control c_codel(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
-        reset_drop_time : 1;
-        new_drop_time : 48;
-
-        // Control law variables
-        new_drop_time_helper: 48;
+    action a_codel_control_law(bit<48> value) {
+        meta.codel.drop_next = meta.codel.time_now + value;
+        r_next_drop.write((bit<32>)0, (bit<48>)meta.codel.drop_next);
     }
-}
 
-metadata codel_t codel;
-
-action a_codel_init() {
-    //for debugging
-    modify_field(codel.ok_to_drop, 0);
-    add(codel.time_now, queueing_metadata.enq_timestamp, queueing_metadata.deq_timedelta);
-    add(codel.new_drop_time, codel.time_now, CONTROL_INTERVAL);
-    register_read(codel.state_dropping , r_state_dropping, 0);
-    register_read(codel.drop_cnt, r_drop_count, 0);
-    register_read(codel.last_drop_cnt, r_last_drop_count, 0);
-    register_read(codel.drop_next, r_next_drop, 0);
-    register_read(codel.drop_time, r_drop_time, 0);
-}
-action a_codel_init_no_sojourn_violation() {
-    a_codel_init();
-    modify_field(codel.reset_drop_time, 1);
-    //inc_reg_statistic(0);
-}
-action a_codel_init_sojourn_violation() {
-    a_codel_init();
-    modify_field(codel.reset_drop_time, 0);
-    //inc_reg_statistic(1);
-}
-
-table t_codel_init_no_sojourn_violation {
-    actions {
-        a_codel_init_no_sojourn_violation;
+    action a_codel_init() {
+        meta.codel.ok_to_drop = 1w0;
+        meta.codel.time_now = (bit<48>)standard_metadata.enq_timestamp + (bit<48>)standard_metadata.deq_timedelta;
+        meta.codel.new_drop_time = meta.codel.time_now + CONTROL_INTERVAL;
+        r_state_dropping.read(meta.codel.state_dropping, (bit<32>)0);
+        r_drop_count.read(meta.codel.drop_cnt, (bit<32>)0);
+        r_last_drop_count.read(meta.codel.last_drop_cnt, (bit<32>)0);
+        r_next_drop.read(meta.codel.drop_next, (bit<32>)0);
+        r_drop_time.read(meta.codel.drop_time, (bit<32>)0);
     }
-}
-table t_codel_init_sojourn_violation {
-    actions {
-        a_codel_init_sojourn_violation;
+
+    action a_go_to_drop_state() {
+        mark_to_drop();
+        r_state_dropping.write((bit<32>)0, (bit<1>)1);
+        meta.codel.delta = meta.codel.drop_cnt - meta.codel.last_drop_cnt;
+        meta.codel.time_since_last_dropping = meta.codel.time_now - meta.codel.drop_next;
+        meta.codel.drop_cnt = 32w1;
+        r_drop_count.write((bit<32>)0, (bit<32>)1);
     }
-}
 
-
-register r_drop_time {
-    width: 48;
-    // static: t_drop_time;
-    instance_count: 1;  //one per queue?
-}
-
-
-table t_set_drop_time {
-    actions {
-        a_set_drop_time;
-    }
-}
-table t_reset_drop_time {
-    actions {
-        a_reset_drop_time;
-    }
-}
-action a_set_drop_time (){ //TODO add queue id
-    register_write(r_drop_time, 0, codel.new_drop_time);
-    modify_field(codel.drop_time, codel.new_drop_time);
-}
-action a_reset_drop_time (){ //TODO add queue id
-    register_write(r_drop_time, 0, 0);
-    modify_field(codel.drop_time, 0);
-}
-
-table t_set_ok_to_drop {
-    actions {
-        a_set_ok_to_drop;
-    }
-}
-action a_set_ok_to_drop (){
-    modify_field(codel.ok_to_drop, 1);
-    //inc_reg_statistic(2);
-}
-
-register r_state_dropping {
-    width: 1;
-    instance_count: 1;  //one per queue?
-}
-
-control c_codel {
-    //stage 0:
-    if (queueing_metadata.deq_timedelta < SOJOURN_TARGET or queueing_metadata.deq_qdepth < 1) { //TODO: check if it works correctly
-        apply(t_codel_init_no_sojourn_violation);
-    } else {
-        apply(t_codel_init_sojourn_violation);
-    }
-    //stage 1:
-    if (codel.reset_drop_time == 1) {
-        apply(t_reset_drop_time);
-    } else {
-        if(codel.drop_time == 0){
-            apply(t_set_drop_time);
+    table t_codel_control_law {
+        actions = {
+            a_codel_control_law;
         }
+        key = {
+            meta.codel.drop_cnt: lpm;
+        }
+        size = 32;
     }
 
-    //stage 2:
-    if (codel.reset_drop_time == 0) {
-        if(codel.drop_time > 0){
-            if(codel.time_now >= codel.drop_time){
-                apply(t_set_ok_to_drop);
+    apply {
+        a_codel_init();
+        if (standard_metadata.deq_timedelta < SOJOURN_TARGET || standard_metadata.deq_qdepth < 19w1) { 
+            meta.codel.reset_drop_time = 1w1;
+        }
+
+        if (meta.codel.reset_drop_time == 1w1) {
+            r_drop_time.write(0, (bit<48>)0);
+            meta.codel.drop_time = 48w0;
+        }
+        else {
+            if (meta.codel.drop_time == 48w0) {
+                r_drop_time.write(0, (bit<48>)meta.codel.new_drop_time);
+                meta.codel.drop_time = meta.codel.new_drop_time;
+            }
+            else { //if (meta.codel.drop_time > 48w0)
+                if (meta.codel.time_now >= meta.codel.drop_time) {
+                    meta.codel.ok_to_drop = 1w1;
+                }
+            }
+        }
+
+        if (meta.codel.state_dropping == 1w1) {
+            if (meta.codel.ok_to_drop == 1w0) {
+                r_state_dropping.write(0, (bit<1>)0); //leave drop state
+            }
+            else {
+                if (meta.codel.time_now >= meta.codel.drop_next) {
+                    mark_to_drop();
+        	    meta.codel.drop_cnt = meta.codel.drop_cnt + 32w1;
+        	    r_drop_count.write(0, (bit<32>)meta.codel.drop_cnt);
+                    t_codel_control_law.apply();
+                }
+            }
+        }
+        else {
+            if (meta.codel.ok_to_drop == 1w1) {
+                    a_go_to_drop_state();
+                if (meta.codel.delta > 32w1 && meta.codel.time_since_last_dropping < CONTROL_INTERVAL*16) {
+                    r_drop_count.write(0, (bit<32>)meta.codel.delta);
+        	        meta.codel.drop_cnt = meta.codel.delta;
+                }
+                r_last_drop_count.write(0, (bit<32>)meta.codel.drop_cnt);
+                t_codel_control_law.apply();
             }
         }
     }
-
-    //stage 3:
-    if(codel.state_dropping == 1){
-        if(codel.ok_to_drop == 0){
-            apply(t_stop_dropping);
-        } else if (codel.time_now >= codel.drop_next) {
-            apply(t_drop);
-            apply(t_codel_control_law); //TODO
-        }
-    } else {
-        if(codel.ok_to_drop == 1){
-            //start dropping
-            apply(t_start_dropping);
-            //stage 4:
-            if(codel.delta > 1 and codel.time_since_last_dropping < CONTROL_INTERVAL*16){
-                apply(t_start_dropping_hard);
-            }
-            apply(t_codel_set_last_drpcnt);
-            apply(t_codel_control_law); //TODO
-        }
-    }
-    //if(...) { //every time we dropped ...
-            //apply(t_codel_control_law);
-    //}
 }
-
-table t_start_dropping {
-    actions{
-        a_go_to_drop_state;
-    }
-}
-
-table t_stop_dropping{
-        actions{
-        a_go_to_idle_state;
-    }
-}
-register r_drop_count {
-    width: 32;
-    instance_count: 1;  //one per queue?
-}
-register r_last_drop_count {
-    width: 32;
-    instance_count: 1;  //one per queue?
-}
-
-register r_next_drop {
-    width: 48;
-    instance_count: 1;  //one per queue?
-}
-
-action a_go_to_idle_state (){
-    register_write(r_state_dropping, 0, 0); //go to idle state
-    //inc_reg_statistic(7);
-}
-
-action a_go_to_drop_state (){
-    drop();
-    register_write(r_state_dropping, 0, 1); //go to drop state
-    subtract(codel.delta, codel.drop_cnt, codel.last_drop_cnt);
-    subtract(codel.time_since_last_dropping, codel.time_now, codel.drop_next);
-    modify_field(codel.drop_cnt, 1);
-    register_write(r_drop_count, 0, 1);
-    //inc_reg_statistic(9);
-}
-
-table t_start_dropping_hard {
-    actions {
-        a_start_hard_dropping;
-    }
-}
-
-action a_start_hard_dropping (){
-    register_write(r_drop_count, 0 , codel.delta);
-    modify_field(codel.drop_cnt, codel.delta);
-}
-
-table t_codel_set_last_drpcnt {
-    actions{ a_codel_set_last_drpcnt;}
-}
-
-action a_codel_set_last_drpcnt (){
-    register_write(r_last_drop_count, 0, codel.drop_cnt);
-    //inc_reg_statistic(8);
-}
-
-//counter c_codel_control_law {
-//    type : packets;
-//    direct : t_codel_control_law;
-//}
-
-table t_codel_control_law {
-    reads {
-        codel.drop_cnt : lpm;
-    }
-    actions {
-        a_codel_control_law;
-    }
-    size : 32;
-}
-
-
-action a_codel_control_law(value) {
-    add(codel.drop_next, codel.time_now , value);
-    register_write(r_next_drop, 0, codel.drop_next);
-}
-
-//for all drops n >= 3, first drop is done by a_go_to_drop_state
-table t_drop {
-    actions {
-        a_drop_normal;
-    }
-}
-
-register r_statistic {
-    width: 32;
-    instance_count: 11;
-}
-
-action a_drop_normal(){
-    drop();
-    add(codel.drop_cnt, codel.drop_cnt, 1);
-    register_write(r_drop_count,0, codel.drop_cnt);
-    //inc_reg_statistic(10);
-}
-
-//header_type foo_t {
-//    fields {
-//        foo: 32;
-//    }
-//}
-//metadata foo_t foo;
-//action inc_reg_statistic (i){
-//    register_read(foo.foo, r_statistic, i);
-//    modify_field(foo.foo, foo.foo + 1);
-//    register_write(r_statistic, i, foo.foo);
-//}

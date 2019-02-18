@@ -1,5 +1,5 @@
 /*
-* Copyright 2018-present Ralf Kundel, Jeremias Blendin
+* Copyright 2018-present Ralf Kundel, Nikolas Eller
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -13,120 +13,108 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#define add_queue_delay
+
+#include <core.p4>
+#include <v1model.p4>
+
+#define add_queue_delay //uncomment this line, if the queue delays should be stored in the TCP packets
 
 #include "header.p4"
 #include "codel.p4"
 
 #ifdef add_queue_delay
-#include "tcp_checksum.p4"
 #include "queue_measurement.p4"
+#include "tcp_checksum.p4"
 #endif
 
-header ethernet_t ethernet;
-header ipv4_t ipv4;
-header udp_t udp;
-header tcp_t tcp;
-header tcp_opt_t tcp_options;
-metadata queueing_metadata_t queueing_metadata;
-
-/////////////////////////////////
-//        begin parser         //
-/////////////////////////////////
-
-parser start {
-	extract(ethernet);
-	return select(ethernet.ethertype){
-		0x0800: parse_ipv4;
-		default: ingress;
-	}
-}
-
-parser parse_ipv4 {
-    extract(ipv4);
-    set_metadata(routing_metadata.tcpLength, latest.totalLen);
-    return select(ipv4.protocol){
-		17: parse_udp;
-        6: parse_tcp;
-		default: ingress;
-	}
-}
-
-parser parse_udp {
-    extract(udp);
-    return select(udp.destPort){
-		//1234: parse_delay;
-		default: ingress;
-	}
-}
-
-parser parse_tcp {
-    extract(tcp);
-    #ifdef add_queue_delay
-    return select(tcp.dataOffset){
-        0x8: parse_payload;
-        default: ingress;
+parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+    state parse_ipv4 {
+        packet.extract(hdr.ipv4);
+        meta.routing_metadata.tcpLength = hdr.ipv4.totalLen;
+        transition select(hdr.ipv4.protocol) {
+            8w17: parse_udp;
+            8w6: parse_tcp;
+            default: accept;
+        }
     }
-    #else
-    return ingress;
-    #endif
-}
-parser parse_payload {
-    extract(tcp_options);
-    #ifdef add_queue_delay
-    extract(queue_delay);
-    #endif
-    return ingress;
-}
-
-/////////////////////////////////
-//          end parser         //
-/////////////////////////////////
-
-
-/////////////////////////////////
-//        begin tables         //
-/////////////////////////////////
-
-table forwarding {
-	reads {
-		standard_metadata.ingress_port : exact;
-        ipv4.dstAddr : exact;
-	}
-	actions {
-		forward;
-	}
-}
-
-//Drops at the beginning with src_mac
-action forward(egress_spec, dst_mac) {
-	modify_field(standard_metadata.egress_spec, egress_spec);
-    modify_field(ethernet.dst_addr, dst_mac);
-}
-
-action _drop () {
-	drop() ;
-}
-action nop(){
-}
-
-
-
-/////////////////////////////////
-//         end  tables         //
-/////////////////////////////////
-
-
-control ingress {
-	apply(forwarding);
-}
-
-control egress {
-    if (standard_metadata.ingress_port == 1) {
-        c_codel();
+    state parse_payload {
+        packet.extract(hdr.tcp_options);
+	#ifdef add_queue_delay
+        packet.extract(hdr.queue_delay);
+	#endif
+        transition accept;
     }
-    #ifdef add_queue_delay
-    c_add_queue_delay();
-    apply(t_checksum);
-    #endif
+    state parse_tcp {
+        packet.extract(hdr.tcp);
+	#ifdef add_queue_delay
+        transition select(hdr.tcp.dataOffset) {
+            4w0x8: parse_payload;
+            default: accept;
+        }
+	#else
+	transition accept;
+	#endif
+    }
+    state parse_udp {
+        packet.extract(hdr.udp);
+        /*transition select(hdr.udp.destPort) {
+            default: accept;
+        }*/
+	transition accept;
+    }
+    state start {
+        packet.extract(hdr.ethernet);
+        transition select(hdr.ethernet.ethertype) {
+            16w0x800: parse_ipv4;
+            default: accept;
+        }
+    }
 }
+
+control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+    c_checksum() c_checksum_0;
+    c_codel() c_codel_0;
+    c_add_queue_delay() c_add_queue_delay_0;
+    apply {
+        if (standard_metadata.ingress_port == 9w1) {
+            c_codel_0.apply(hdr, meta, standard_metadata);
+        }
+	#ifdef add_queue_delay
+        c_add_queue_delay_0.apply(hdr, standard_metadata);
+        c_checksum_0.apply(hdr, meta);
+	#endif
+    }
+}
+
+control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+    action forward(bit<9> egress_spec, bit<48> dst_mac) {
+        standard_metadata.egress_spec = egress_spec;
+        hdr.ethernet.dst_addr = dst_mac;
+    }
+    table forwarding {
+        actions = {
+            forward;
+        }
+        key = {
+            standard_metadata.ingress_port: exact;
+            hdr.ipv4.dstAddr              : exact;
+        }
+    }
+    apply {
+        forwarding.apply();
+    }
+}
+
+control DeparserImpl(packet_out packet, in headers hdr) {
+    apply {
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.ipv4);
+        packet.emit(hdr.tcp);
+        packet.emit(hdr.tcp_options);
+        packet.emit(hdr.queue_delay);
+        packet.emit(hdr.udp);
+    }
+}
+
+V1Switch(ParserImpl(), verifyChecksum(), ingress(), egress(), computeChecksum(), DeparserImpl()) main;
+

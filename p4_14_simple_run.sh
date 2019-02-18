@@ -44,8 +44,8 @@ fi
 
 
 #compile p4 file
-[ -e router_compiled.json ] && sudo rm -f router_compiled.json
-p4c-bm2-ss srcP4/simple_router.p4 --std p4-16 -o router_compiled.json
+[ -e router_compiled.json ] && rm router_compiled.json
+p4c-bmv2 srcP4_14/simple_router.p4 --json router_compiled.json
 
 sudo killall ovs-testcontroller
 sudo mn -c
@@ -56,5 +56,5 @@ sudo PYTHONPATH=$PYTHONPATH:../behavioral-model/mininet/ \
     -p4 \
     --json ./router_compiled.json \
     --cli simple_switch_CLI \
-    --cliCmd srcP4/commandsRouterSimple.txt \
+    --cliCmd srcP4_14/commandsRouterSimple.txt \
     $argsCommand

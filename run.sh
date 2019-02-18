@@ -45,10 +45,7 @@ fi
 
 #compile p4 file
 [ -e router_compiled.json ] && sudo rm -f router_compiled.json
-p4c-bmv2 srcP4/router.p4 --json router_compiled.json
-
-#delete old pcap files
-sudo rm out/*.pcap
+p4c-bm2-ss srcP4/router.p4 --std p4-16 -o router_compiled.json
 
 sudo killall ovs-testcontroller
 sudo mn -c
@@ -56,7 +53,8 @@ sudo mn -c
 sudo PYTHONPATH=$PYTHONPATH:../behavioral-model/mininet/ \
     python srcPython/toposetup.py \
     --swpath ../behavioral-model/targets/simple_switch/simple_switch \
-    --json ./router_compiled.json -p4 \
+    -p4 \
+    --json ./router_compiled.json \
     --cli simple_switch_CLI \
-    --cliCmd commandsCodelRouter.txt \
+    --cliCmd srcP4/commandsCodelRouter.txt \
     $argsCommand

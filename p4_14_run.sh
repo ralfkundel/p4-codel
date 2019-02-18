@@ -14,7 +14,7 @@
 
 argsCommand=""
 
-if [ "$1" = "--nopcap" ]; then
+if [ "$1" = "--nopcap" ] || [ "$1" = "--nocli" ]; then
   argsCommand=$1" True"
 fi
 
@@ -22,7 +22,7 @@ if [ "$1" = "--iperft" ]; then
   argsCommand="--iperft "$2
 fi
 
-if [ "$2" = "--nopcap" ]; then
+if [ "$2" = "--nopcap" ] || [ "$2" = "--nocli" ]; then
   argsCommand=$argsCommand" "$2" True"
 fi
 
@@ -30,37 +30,33 @@ if [ "$2" = "--iperft" ]; then
   argsCommand=$argsCommand" --iperft "$3
 fi
 
-if [ "$3" = "--nopcap" ]; then
+if [ "$3" = "--nopcap" ] || [ "$3" = "--nocli" ]; then
   argsCommand=$argsCommand" "$3" True"
 fi
 
-argsCommand=$argsCommand" --nocli True"
+if [ "$3" = "--iperft" ]; then 
+  argsCommand=$argsCommand" --iperft "$4
+fi
+
+if [ "$4" = "--nopcap" ] || [ "$4" = "--nocli" ]; then
+  argsCommand=$argsCommand" "$4" True"
+fi
 
 
 #compile p4 file
 [ -e router_compiled.json ] && sudo rm -f router_compiled.json
-p4c-bm2-ss srcP4/router.p4 --std p4-16 -o router_compiled.json
+p4c-bmv2 srcP4_14/router.p4 --json router_compiled.json
 
-# Delays 0, 2, 5, 10, 20, 50
-arr=("0" "2" "5" "10" "20" "50")
+#delete old pcap files
+sudo rm out/*.pcap
 
-for i in "${arr[@]}"
-do
-  echo "Run: $i"
-  #delete old pcap files
-  sudo rm out/*.pcap
-
-  sudo killall ovs-testcontroller
-  sudo mn -c
-  #start mininet environment
-  sudo PYTHONPATH=$PYTHONPATH:../behavioral-model/mininet/ \
-      python srcPython/toposetup.py \
-      --swpath ../behavioral-model/targets/simple_switch/simple_switch \
-      --json ./router_compiled.json -p4 \
-      --cli simple_switch_CLI \
-      --cliCmd srcP4/commandsCodelRouter.txt \
-      $argsCommand \
-      --h3delay $i"ms"
-  filename="iperf_output"$i".json"
-  sudo mv out/iperf_output.json out/$filename
-done
+sudo killall ovs-testcontroller
+sudo mn -c
+#start mininet environment
+sudo PYTHONPATH=$PYTHONPATH:../behavioral-model/mininet/ \
+    python srcPython/toposetup.py \
+    --swpath ../behavioral-model/targets/simple_switch/simple_switch \
+    --json ./router_compiled.json -p4 \
+    --cli simple_switch_CLI \
+    --cliCmd srcP4_14/commandsCodelRouter.txt \
+    $argsCommand

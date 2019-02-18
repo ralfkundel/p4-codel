@@ -1,5 +1,6 @@
 # P4 Codel Implementation
-
+Detailed description: [Paper] (ftp://ftp.kom.tu-darmstadt.de/papers/KBVKS18.pdf
+)
 
 ## Install
 For simple tests we recommend the use of our preinstalled VM.
@@ -72,3 +73,10 @@ If the Mininet CLI mode is active, you can look into the running p4-appliction w
 ```
 ./start_bmv2_CLI.sh
 ```
+
+### P4_14 support in p4c
+The new p4c compiler supports P4_14 and P4_16. However, there are some issues with with p4_14 code. Therefore the scripts for P4_14 code are still using the p4c-bm compiler. If you want to use the p4c compiler with p4_14 code, please use the following command in the run scripts:
+```
+p4c srcP4_14/simple_router.p4 --target bmv2 --arch v1model --p4runtime-format json --std p4-14
+```
+and modify the json file name in the run script.
