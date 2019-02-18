@@ -31,6 +31,7 @@ struct codel_t {
     bit<1>  reset_drop_time;
     bit<48> new_drop_time;
     bit<48> new_drop_time_helper;
+    bit<9>  queue_id;
 }
 
 header ethernet_t {
