@@ -1,6 +1,6 @@
 # P4 Codel Implementation
-Detailed description: [Paper] (ftp://ftp.kom.tu-darmstadt.de/papers/KBVKS18.pdf
-)
+Detailed description: [Paper](ftp://ftp.kom.tu-darmstadt.de/papers/KBVKS18.pdf)
+
 
 ## Install
 For simple tests we recommend the use of our preinstalled VM.
