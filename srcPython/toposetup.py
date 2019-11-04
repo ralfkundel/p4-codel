@@ -90,12 +90,12 @@ class MyTopo(Topo):
         h2 = self.addHost('h2', ip = '10.0.1.2/24',
                           mac = '00:00:00:00:01:02',
                           defaultRoute='via 10.0.1.254 dev eth0')
-        h3 = self.addHost('h3', ip = '10.0.2.1/24',
+        h3 = self.addHost('h3', ip = '10.0.3.1/24',
                           mac = '00:00:00:00:02:01',
-                          defaultRoute='via 10.0.2.254 dev eth0')
-        h4 = self.addHost('h4', ip = '10.0.2.2/24',
+                          defaultRoute='via 10.0.3.254 dev eth0')
+        h4 = self.addHost('h4', ip = '10.0.3.2/24',
                           mac = '00:00:00:00:02:02',
-                          defaultRoute='via 10.0.2.254 dev eth0')
+                          defaultRoute='via 10.0.3.254 dev eth0')
 
         self.addLink(h1, s1, delay='0ms')
         self.addLink(h2, s1, delay='0ms')
@@ -104,14 +104,10 @@ class MyTopo(Topo):
 
         self.addLink(s1, aqm_switch,
                      intfName2='r1-eth1',
-                     params2={ 'ip' : '10.0.1.254',
-                               'mac' : '00:00:00:00:01:fe' })#, delay='0ms')
+                     addr2="00:00:00:00:01:fe")
         self.addLink(s2, aqm_switch,
                      intfName2='r1-eth2',
-                     params2={ 'ip' : '10.0.2.254',
-                               'mac' : '00:00:00:00:02:fe' })#, delay='0ms')
-
-
+                     addr2="00:00:00:00:02:fe")
 def main():
     p4 = True if args.useP4 is not None else False
 
@@ -121,14 +117,13 @@ def main():
     mn = Mininet(topo = topo,
                   link = TCLink,
                   host = P4Host,
-#                  switch = P4Switch,
                   autoStaticArp=True  )
 
     internet_hosts = ["h1", "h2"]
     homenet_hosts = ["h3", "h4"]
     routers = ["r1"]
     for h in mn.hosts:
-        print "disable ipv6"
+        print("disable ipv6")
         h.cmd("sysctl -w net.ipv6.conf.all.disable_ipv6=1")
         h.cmd("sysctl -w net.ipv6.conf.default.disable_ipv6=1")
         h.cmd("sysctl -w net.ipv6.conf.lo.disable_ipv6=1")
@@ -137,49 +132,55 @@ def main():
             h.setDefaultRoute("via 10.0.1.254 dev eth0")
         elif h.name in homenet_hosts:
             h.setARP("10.0.2.254", "00:00:00:00:02:fe")
-            h.setDefaultRoute("via 10.0.2.254 dev eth0")
-        elif h.name in routers:
+            h.setDefaultRoute("via 10.0.3.254 dev eth0")
+        elif h.name in routers: #in case of linux kernel router
             print("router")
             h.setMAC("00:00:00:00:01:fe", intf="r1-eth1")
             h.setMAC("00:00:00:00:02:fe", intf="r1-eth2")
             h.setIP(ip="10.0.1.254", prefixLen=24, intf="r1-eth1")
-            h.setIP(ip="10.0.2.254", prefixLen=24, intf="r1-eth2")
+            h.setIP(ip="10.0.3.254", prefixLen=24, intf="r1-eth2")
             h.setARP("10.0.1.1", "00:00:00:00:01:01")
             h.setARP("10.0.1.2", "00:00:00:00:01:02")
-            h.setARP("10.0.2.1", "00:00:00:00:02:01")
-            h.setARP("10.0.2.2", "00:00:00:00:02:02")
+            h.setARP("10.0.3.1", "00:00:00:00:02:01")
+            h.setARP("10.0.3.2", "00:00:00:00:02:02")
 
     for sw in mn.switches:
-        print "disable ipv6"
+        print("disable ipv6")
+        print(sw)
         sw.cmd("sysctl -w net.ipv6.conf.all.disable_ipv6=1")
         sw.cmd("sysctl -w net.ipv6.conf.default.disable_ipv6=1")
         sw.cmd("sysctl -w net.ipv6.conf.lo.disable_ipv6=1")
 
+
     mn.start()
     if not p4 and not args.nopcap:
-        mn.getNodeByName('r1').start()
+        r1 = mn.getNodeByName('r1')
+        r1.start()
 
+        
     iperfTest = IperfTest()
 
     if p4:
         sleep(1)
-        cmd = [args.cli, "--json", args.json,
-                "--thrift-port", str(22222)]
+        r1 = mn.getNodeByName('r1')
+        r1.setIP(ip="10.0.1.254", prefixLen=24, intf="r1-eth1")
+        r1.setIP(ip="10.0.3.254", prefixLen=24, intf="r1-eth2")
+        cmd = [args.cli,  args.json, str(22222)]
         with open(args.cliCmd, "r") as f:
-            print " ".join(cmd)
+            print(" ".join(cmd))
             try:
                 print("Running %s" % cmd)
                 output = subprocess.check_output(cmd, stdin = f)
-                print output
+                print(output)
             except subprocess.CalledProcessError as e:
-                print e
-                print e.output
+                print(e)
+                print(e.output)
 
 
 
     sleep(1)
 
-    print "Now the iperf test starts !"
+    print("Now the iperf test starts !")
     iperfTest.IperfTest(mn.getNodeByName('h1'), mn.getNodeByName('h3'), mn.getNodeByName('h2'), mn.getNodeByName('h4'), args.iperft)
     if not args.nocli:
         CLI( mn )

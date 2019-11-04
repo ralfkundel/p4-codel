@@ -50,11 +50,11 @@ p4c-bm2-ss srcP4/router.p4 --std p4-16 -o router_compiled.json
 sudo killall ovs-testcontroller
 sudo mn -c
 #start mininet environment
-sudo PYTHONPATH=$PYTHONPATH:../behavioral-model/mininet/ \
+sudo PYTHONPATH=$PYTHONPATH:../p4-behavioral-model-performance/mininet/ \
     python srcPython/toposetup.py \
-    --swpath ../behavioral-model/targets/simple_switch/simple_switch \
+    --swpath ../p4-behavioral-model-performance/targets/simple_switch/simple_switch \
     -p4 \
     --json ./router_compiled.json \
-    --cli simple_switch_CLI \
+    --cli  ../p4-behavioral-model-performance/targets/simple_switch/sswitch_CLI \
     --cliCmd srcP4/commandsCodelRouter.txt \
     $argsCommand

@@ -47,7 +47,7 @@ sudo rm out/*.pcap
 sudo killall ovs-testcontroller
 sudo mn -c
 #start mininet environment
-sudo PYTHONPATH=$PYTHONPATH:../behavioral-model/mininet/ \
+sudo PYTHONPATH=$PYTHONPATH:../p4-behavioral-model/mininet/ \
     python srcPython/toposetup.py \
     --json ./DOESNOTEXIST.json \
     --cli DOESNOTEXIST \

@@ -118,7 +118,7 @@ def plotPcapTrace(trace):
     for tuple in trace:
         a = tuple[0]
         b = tuple[1]
-        diff = (b.time - a.time)*1000.0
+        diff = float(b.time - a.time)*1000.0
         x_val = (a.time - basetime)
         y_val = diff
         x_values.append(x_val)
@@ -143,9 +143,9 @@ def plotPcapTrace(trace):
         i += 1
         p[n - 1] = tuple[1]
         if (i < n):
-            diff = (p[n - 1].time - p[0].time) / i  # error correction for the n first entries
+            diff = float(p[n - 1].time - p[0].time) / i  # error correction for the n first entries
         else:
-            diff = (p[n - 1].time - p[0].time) / n  # microseconds per packet
+            diff = float(p[n - 1].time - p[0].time) / n  # microseconds per packet
         x_val = (p[n - 1].time - basetime)
         if diff == 0:
             y_val = 0
@@ -248,7 +248,7 @@ def plotPcapQueueDelay(trace):
     basetime = trace[0][0].time
     for tuple in trace:
         packet = tuple[1] ##only egress is interesting for us
-        x_val = packet.time-basetime
+        x_val = float(packet.time-basetime)
         if packet['IP'].len < 500:
             continue
         tcp = packet['TCP']

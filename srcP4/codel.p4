@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-#define SOJOURN_TARGET 32w5000  //in usec - 5ms
+#define SOJOURN_TARGET 5000  //in usec - 5ms
 #define CONTROL_INTERVAL 48w100000 //in usec - 100 ms - Changes must be done here AND in commandsCodelRouter.txt
 #define INTERFACE_MTU 1500
 #define NO_QUEUE_ID 32w64
@@ -44,7 +44,7 @@ control c_codel(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
 
     action a_go_to_drop_state() {
-        mark_to_drop();
+        mark_to_drop(standard_metadata);
         r_state_dropping.write((bit<32>)meta.codel.queue_id, (bit<1>)1);
         meta.codel.delta = meta.codel.drop_cnt - meta.codel.last_drop_cnt;
         meta.codel.time_since_last_dropping = meta.codel.time_now - meta.codel.drop_next;
@@ -64,7 +64,7 @@ control c_codel(inout headers hdr, inout metadata meta, inout standard_metadata_
 
     apply {
         a_codel_init();
-        if (standard_metadata.deq_timedelta < SOJOURN_TARGET || standard_metadata.deq_qdepth < 19w1) { 
+        if (standard_metadata.deq_timedelta < SOJOURN_TARGET ) { //|| standard_metadata.deq_qdepth < 19w1
             meta.codel.reset_drop_time = 1w1;
         }
 
@@ -90,7 +90,7 @@ control c_codel(inout headers hdr, inout metadata meta, inout standard_metadata_
             }
             else {
                 if (meta.codel.time_now >= meta.codel.drop_next) {
-                    mark_to_drop();
+                    mark_to_drop(standard_metadata);
         	    meta.codel.drop_cnt = meta.codel.drop_cnt + 32w1;
         	    r_drop_count.write((bit<32>)meta.codel.queue_id, (bit<32>)meta.codel.drop_cnt);
                     t_codel_control_law.apply();

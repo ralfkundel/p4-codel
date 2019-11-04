@@ -1,32 +1,25 @@
-table_add forwarding forward 1 10.0.2.1 => 2 00:00:00:00:02:01
-table_add forwarding forward 1 10.0.2.2 => 2 00:00:00:00:02:02
+port_add r1-eth1 1
+port_add r1-eth2 2
+table_add forwarding forward 1 10.0.3.1 => 2 00:00:00:00:02:01
+table_add forwarding forward 1 10.0.3.2 => 2 00:00:00:00:02:02
 table_add forwarding forward 2 10.0.1.1 => 1 00:00:00:00:01:01
 table_add forwarding forward 2 10.0.1.2 => 1 00:00:00:00:01:02
-
-
-set_queue_rate 2000 2             //in pps
+set_queue_rate 300 2             //in pps
 set_queue_depth 10000 2           //in nb_pkts
-
 table_set_default t_codel_control_law a_codel_control_law 552
-
 table_add t_codel_control_law a_codel_control_law 0/17 => 781
 table_add t_codel_control_law a_codel_control_law 0/18 => 1104
 table_add t_codel_control_law a_codel_control_law 0/19 => 1562
-
 table_add t_codel_control_law a_codel_control_law 0/20 => 2209
 table_add t_codel_control_law a_codel_control_law 0/21 => 3125
 table_add t_codel_control_law a_codel_control_law 0/22 => 4419
-
 table_add t_codel_control_law a_codel_control_law 0/23 => 6250
 table_add t_codel_control_law a_codel_control_law 0/24 => 8838
 table_add t_codel_control_law a_codel_control_law 0/25 => 12500
-
 table_add t_codel_control_law a_codel_control_law 0/26 => 17677
 table_add t_codel_control_law a_codel_control_law 0/27 => 25000
 table_add t_codel_control_law a_codel_control_law 0/28 => 35355
-
 table_add t_codel_control_law a_codel_control_law 0/29 => 50000
 table_add t_codel_control_law a_codel_control_law 0/30 => 70710
 table_add t_codel_control_law a_codel_control_law 0/31 => 100000
-//this should never happen ...
 table_add t_codel_control_law a_codel_control_law 0/32 => 100000

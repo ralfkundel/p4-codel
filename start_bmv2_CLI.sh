@@ -11,5 +11,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-simple_switch_CLI --thrift-port 22222 --json router_compiled.json
+../p4-behavioral-model-performance/targets/simple_switch/sswitch_CLI router_compiled.json 22222

@@ -53,11 +53,11 @@ do
   sudo killall ovs-testcontroller
   sudo mn -c
   #start mininet environment
-  sudo PYTHONPATH=$PYTHONPATH:../behavioral-model/mininet/ \
+  sudo PYTHONPATH=$PYTHONPATH:../p4-behavioral-model-performance/mininet/ \
       python srcPython/toposetup.py \
-      --swpath ../behavioral-model/targets/simple_switch/simple_switch \
+      --swpath ../p4-behavioral-model-performance/targets/simple_switch/simple_switch \
       --json ./router_compiled.json -p4 \
-      --cli simple_switch_CLI \
+      --cli ../p4-behavioral-model-performance/targets/simple_switch/sswitch_CLI \
       --cliCmd srcP4/commandsCodelRouter.txt \
       $argsCommand \
       --h3delay $i"ms"
