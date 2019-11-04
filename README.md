@@ -6,7 +6,15 @@ Detailed description: [Paper](https://www.kom.tu-darmstadt.de/research-results/p
 For simple tests we recommend the use of our preinstalled VM.
 
 ### Preinstalled VM
-A completely set up VM can be downloaded here:
+A completely set up VM for P4_16 can be downloaded here:
+
+```
+ftp://ftp.kom.tu-darmstadt.de/VMs/p4_16-codel.ova
+```
+*Username:* **sdn**
+*Password:* **vm**
+
+and a legacy VM for P4_14 (used for the creation of the Paper results):
 ```
 ftp://ftp.kom.tu-darmstadt.de/VMs/P4-Codel.ova
 ```
