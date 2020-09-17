@@ -7,7 +7,7 @@ Last tested SDE is version 9.1.1. The SDE should be best compiled with all addit
 ### Compile
 In order to compile, use the build script provided by the SDE:
 ```
-../p4_build.sh /home/rkundel/p4_16-codel/l1switchCodel.p4 
+./p4_build.sh /home/ralfkundel/p4-codel/targets/tofino/srcP4/l1switchCodel.p4 
 ```
 
 ### Window 1: switch control daemon
@@ -32,7 +32,7 @@ In a second window start the barefoot CLI with the following command in the SDE:
 ./run_bfshell.sh
 ```
 
-In order to benefit from a lot of (python) features, we will do the following steps with the python runtime. This can be started with:
+In order to benefit from a lot of (python) features, we will do the following steps with the python runtime. This can be started within the bfshell:
 ```
 bfrt_python
 ```
