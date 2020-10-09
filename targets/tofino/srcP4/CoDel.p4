@@ -62,8 +62,6 @@ control CoDelEgress (in bit<48> ingress_tstamp,
 		0x52, 0x56, 0x5a, 0x60,
 		0x66, 0x6f, 0x79, 0x87,
 		0x0, 0x0, 0x0, 0x0}) sqrtn;
-	//for tofino2 the following simplified mode can be used instead
-		//MathUnit<bit<32>>(RSQRT, 1<<20) sqrtn;
 	Register< register_operations, bit<9>> (32w512) codel_salu_2;
 	RegisterAction<register_operations, bit<9>, bit<1> >(codel_salu_2) codel_salu_2_action = {
 		void apply(inout register_operations inout_vals, out bit<1> out_val){
