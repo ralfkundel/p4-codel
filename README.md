@@ -1,5 +1,6 @@
 # P4 Codel Implementation
-Detailed description: [Paper](https://ieeexplore.ieee.org/document/8725736)
+Detailed description of P4 concepts: [Paper](https://ieeexplore.ieee.org/document/8725736)
+Detailed description of Tofino realization: [Paper](https://ieeexplore.ieee.org/abstract/document/9500943)
 
 
 ## Install
