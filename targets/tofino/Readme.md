@@ -7,12 +7,12 @@ Last tested SDE is version 9.1.1. The SDE should be best compiled with all addit
 ### Compile
 In order to compile, use the build script provided by the SDE:
 ```
-./p4_build.sh /home/ralfkundel/p4-codel/targets/tofino/srcP4/l1switchCodel.p4 
+./p4_build.sh
 ```
 
 ### Window 1: switch control daemon
 ```
-./run_switchd.sh -p l1switchCodel
+./run_switchd.sh
 ```
 This will take a few seconds. After the initialization process is finished, configure the ports. In this example, we will use port 64/0 and 64/1 for packet ingress and egress.
 
@@ -45,6 +45,14 @@ bfrt.l1switchCodel.pipe.SwitchIngress.t_l1_forwarding.add_with_send(ingress_port
 
 ### Window 3: Enable Port Shaping
 The CoDel algorithm itself is on a per port base and do not require any table entries. However, the corresponding egress port queue must be configured to shape the traffic in order to build up a queue. For that, in a third window, start the following script of the SDE:
+```
+python3 set_shape_rate.py
+```
+and adapt the port and shaper rate in this script before (default: port==153, rate==100 Mbit/s).
+
+
+alternatively, you can use the run_pd_rpc.py script (part of older SDE util scripts collections):
+
 ```
 ./run_pd_rpc.py
 ```
